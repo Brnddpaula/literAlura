@@ -1,5 +1,6 @@
 package challenge.alura.literAlura.controller;
 
+import challenge.alura.literAlura.model.GutendexResponse;
 import challenge.alura.literAlura.service.GutendexService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +17,8 @@ public class BookController {
 
     @GetMapping("/books")
     public String getBooks(@RequestParam String authorYearStart, @RequestParam String languages) {
-        Optional<String> books = gutendexService.fetchBooks(authorYearStart, languages);
-        return books.orElse("Não foi possível obter os livros.");
+        Optional<GutendexResponse> books = gutendexService.fetchBooks(authorYearStart, languages);
+        books.ifPresent(gutendexService::printBooks);
+        return books.map(GutendexResponse::toString).orElse("Não foi possível obter os livros.");
     }
 }
