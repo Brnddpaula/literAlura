@@ -1,53 +1,62 @@
 package challenge.alura.literAlura.service;
 
-import challenge.alura.literAlura.model.GutendexResponse;
+import challenge.alura.literAlura.model.Autor;
+import challenge.alura.literAlura.model.Book;
+import challenge.alura.literAlura.repository.AutorRepository;
+import challenge.alura.literAlura.repository.BookRepository;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.Optional;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class GutendexService {
 
-    private final HttpClient httpClient;
-    private final ObjectMapper objectMapper;
+    private final RestTemplate restTemplate;
+    private final BookRepository bookRepository;
+    private final AutorRepository autorRepository;
 
-    public GutendexService() {
-        this.httpClient = HttpClient.newHttpClient();
-        this.objectMapper = new ObjectMapper();
+    @Autowired
+    public GutendexService(RestTemplate restTemplate, BookRepository bookRepository, AutorRepository autorRepository) {
+        this.restTemplate = restTemplate;
+        this.bookRepository = bookRepository;
+        this.autorRepository = autorRepository;
     }
 
-    public Optional<GutendexResponse> fetchBooks(String authorYearStart, String languages) {
+    public void fetchBooks(int year, String languages) {
+        String url = "https://gutendex.com/books?languages=" + languages + "&search=" + year;
+        String response = restTemplate.getForObject(url, String.class);
+
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI("https://gutendex.com/books?author_year_start=" + authorYearStart + "&languages=" + languages))
-                    .GET()
-                    .build();
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(response);
+            List<Book> books = new ArrayList<>();
+            for (JsonNode bookNode : root.path("results")) {
+                Book book = new Book();
+                book.setTitle(bookNode.path("title").asText());
+                book.setLanguages(bookNode.path("languages").asText());
+                book.setDownloads(bookNode.path("download_count").asInt());
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                GutendexResponse gutendexResponse = objectMapper.readValue(response.body(), GutendexResponse.class);
-                return Optional.of(gutendexResponse);
-            } else {
-                System.out.println("Erro na solicitação: " + response.statusCode());
-                return Optional.empty();
+                JsonNode authorNode = bookNode.path("authors").get(0);
+                if (authorNode != null) {
+                    Autor autor = new Autor();
+                    autor.setName(authorNode.path("name").asText());
+                    autor.setBirthYear(authorNode.path("birth_year").asInt());
+                    autor.setDeathYear(authorNode.path("death_year").asInt());
+                    autorRepository.save(autor);
+                    book.setAuthor(autor);
+                }
+                books.add(book);
             }
-        } catch (Exception e) {
+            bookRepository.saveAll(books);
+        } catch (IOException e) {
             e.printStackTrace();
-            return Optional.empty();
-        }
-    }
-
-    public void printBooks(GutendexResponse response) {
-        if (response != null && response.getResults() != null) {
-            response.getResults().forEach(System.out::println);
-        } else {
-            System.out.println("Nenhum livro encontrado.");
+            System.out.println("Erro ao obter livros ou nenhum livro encontrado.");
         }
     }
 }

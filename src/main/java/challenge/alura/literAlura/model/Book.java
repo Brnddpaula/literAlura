@@ -1,25 +1,27 @@
 package challenge.alura.literAlura.model;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Entity
 public class Book {
-    private int id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     private String title;
+    private String languages;
+    private Integer downloads;
 
-    @JsonAlias("authors")
-    private String[] authors;
-
-    @JsonAlias("languages")
-    private String[] languages;
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "autor_id")
+    private Autor author;
 
     // Getters and Setters
-    public int getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -31,29 +33,27 @@ public class Book {
         this.title = title;
     }
 
-    public String[] getAuthors() {
-        return authors;
-    }
-
-    public void setAuthors(String[] authors) {
-        this.authors = authors;
-    }
-
-    public String[] getLanguages() {
+    public String getLanguages() {
         return languages;
     }
 
-    public void setLanguages(String[] languages) {
+    public void setLanguages(String languages) {
         this.languages = languages;
     }
 
-    @Override
-    public String toString() {
-        return "Book{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", authors=" + String.join(", ", authors) +
-                ", languages=" + String.join(", ", languages) +
-                '}';
+    public Integer getDownloads() {
+        return downloads;
+    }
+
+    public void setDownloads(Integer downloads) {
+        this.downloads = downloads;
+    }
+
+    public Autor getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(Autor author) {
+        this.author = author;
     }
 }
