@@ -1,13 +1,20 @@
 package challenge.alura.literAlura.model;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Book {
     private int id;
     private String title;
+
+    @JsonAlias("authors")
     private String[] authors;
+
+    @JsonAlias("languages")
     private String[] languages;
 
+    // Getters and Setters
     public int getId() {
         return id;
     }
@@ -38,5 +45,15 @@ public class Book {
 
     public void setLanguages(String[] languages) {
         this.languages = languages;
+    }
+
+    @Override
+    public String toString() {
+        return "Book{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", authors=" + String.join(", ", authors) +
+                ", languages=" + String.join(", ", languages) +
+                '}';
     }
 }

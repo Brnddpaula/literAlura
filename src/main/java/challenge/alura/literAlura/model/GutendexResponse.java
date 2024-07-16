@@ -14,6 +14,7 @@ public class GutendexResponse {
     @JsonAlias("results")
     private List<Book> results;
 
+    // Getters and Setters
     public int getCount() {
         return count;
     }
